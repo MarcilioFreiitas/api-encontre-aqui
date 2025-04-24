@@ -22,12 +22,12 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
-    
+
     @Operation(
         summary = "Criação de Usuário",
         description = "Cria um novo usuário utilizando os dados fornecidos no corpo da requisição.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Usuário criado com sucesso",
+            @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
             @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos", content = @Content)
         }
@@ -35,16 +35,21 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<UsuarioDTO> criarUsuario(@Valid @RequestBody UsuarioDTO usuarioDTO) {
         UsuarioDTO novoUsuario = usuarioService.criarUsuario(usuarioDTO);
-        return ResponseEntity.ok(novoUsuario);
+        return ResponseEntity.status(201).body(novoUsuario);
     }
 
     @Operation(
         summary = "Listagem de Usuários",
-        description = "Retorna uma lista com todos os usuários cadastrados."
+        description = "Retorna uma lista com todos os usuários cadastrados.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Usuários listados com sucesso",
+                content = @Content(mediaType = "application/json"))
+        }
     )
     @GetMapping
     public ResponseEntity<List<UsuarioDTO>> listarUsuarios() {
-        return ResponseEntity.ok(usuarioService.listarUsuarios());
+        List<UsuarioDTO> usuarios = usuarioService.listarUsuarios();
+        return ResponseEntity.ok(usuarios);
     }
 
     @Operation(
@@ -60,7 +65,8 @@ public class UsuarioController {
     public ResponseEntity<UsuarioDTO> buscarPorId(
             @Parameter(description = "ID do usuário a ser buscado", required = true)
             @PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarPorId(id));
+        UsuarioDTO usuario = usuarioService.buscarPorId(id);
+        return ResponseEntity.ok(usuario);
     }
 
     @Operation(
@@ -69,6 +75,7 @@ public class UsuarioController {
         responses = {
             @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos", content = @Content),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content)
         }
     )
@@ -77,7 +84,8 @@ public class UsuarioController {
             @Parameter(description = "ID do usuário a ser atualizado", required = true)
             @PathVariable Long id,
             @Valid @RequestBody UsuarioDTO usuarioDTO) {
-        return ResponseEntity.ok(usuarioService.atualizarUsuario(id, usuarioDTO));
+        UsuarioDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioDTO);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
     @Operation(
