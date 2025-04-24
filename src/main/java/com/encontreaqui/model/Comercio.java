@@ -1,5 +1,6 @@
 package com.encontreaqui.model;
 
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 
 @Entity
+@DiscriminatorValue("COMERCIO")
 public class Comercio extends Anuncio {
 
     @NotNull(message = "O endereço completo não pode ser nulo.")
@@ -28,6 +30,9 @@ public class Comercio extends Anuncio {
     @Size(min = 3, max = 100, message = "O tipo de estabelecimento deve ter entre 3 e 100 caracteres.")
     private String tipoEstabelecimento;
 
+    
+    public Comercio() {}
+    
     public Comercio(String enderecoCompleto, String horarioFuncionamento, String telefone, String website,
                     String tipoEstabelecimento) {
         super();

@@ -1,11 +1,13 @@
 package com.encontreaqui.model;
 
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 @Entity
+@DiscriminatorValue("SERVICO")
 public class Servico extends Anuncio {
 
     @NotNull(message = "A área de atuação não pode ser nula.")
@@ -23,6 +25,9 @@ public class Servico extends Anuncio {
     @Size(min = 3, max = 100, message = "O nome do profissional responsável deve ter entre 3 e 100 caracteres.")
     private String profissionalResponsavel;
 
+    public Servico() {}
+    
+    
     public Servico(String areaAtuacao, Integer tempoMedioAtendimento, boolean necessitaAgendamento,
                    String profissionalResponsavel) {
         super();

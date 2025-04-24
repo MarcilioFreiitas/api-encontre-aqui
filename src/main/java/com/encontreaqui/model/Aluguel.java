@@ -1,5 +1,6 @@
 package com.encontreaqui.model;
 
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 @Entity
+@DiscriminatorValue("ALUGUEL")
 public class Aluguel extends Anuncio {
 
     @NotNull(message = "O número de quartos não pode ser nulo.")
@@ -28,6 +30,9 @@ public class Aluguel extends Anuncio {
     @Size(min = 3, max = 100, message = "O período mínimo de contrato deve ter entre 3 e 100 caracteres.")
     private String periodoMinimoContrato;
 
+    
+    public Aluguel() {}
+    
     public Aluguel(Integer numeroDeQuartos, Double areaEmM2, Boolean mobiliado, BigDecimal valorCaucao,
                    String periodoMinimoContrato) {
         super();
