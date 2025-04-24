@@ -103,32 +103,46 @@
 	</dependencies>
 
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</path>
-					</annotationProcessorPaths>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <plugins>
+        <!-- Configuração do Maven Compiler -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>11</source> <!-- Certifique-se de que essas versões estão corretas -->
+                <target>11</target>
+                <annotationProcessorPaths>
+                    <!-- Lombok -->
+                    <path>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>1.18.24</version>
+                    </path>
+                    <!-- MapStruct -->
+                    <path>
+                        <groupId>org.mapstruct</groupId>
+                        <artifactId>mapstruct-processor</artifactId>
+                        <version>1.4.2.Final</version>
+                    </path>
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
+
+        <!-- Plugin para empacotamento Spring Boot -->
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+                <excludes>
+                    <exclude>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                    </exclude>
+                </excludes>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+
 
 </project>
