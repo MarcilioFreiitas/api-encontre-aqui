@@ -1,0 +1,14 @@
+# Imagem base contendo o JDK (neste exemplo, estou usando o OpenJDK 17)
+FROM openjdk:17-jdk-slim
+
+# Argumento para escolher o arquivo JAR gerado pelo Maven
+ARG JAR_FILE=target/encontreaqui-0.0.1-SNAPSHOT.jar
+
+# Copia o JAR para a imagem
+COPY ${JAR_FILE} app.jar
+
+# Expõe a porta (por exemplo, 8080)
+EXPOSE 8080
+
+# Comando que será executado para iniciar o aplicativo
+ENTRYPOINT ["java", "-jar", "/app.jar"]
