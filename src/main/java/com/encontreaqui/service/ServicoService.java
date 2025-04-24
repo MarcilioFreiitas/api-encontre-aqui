@@ -6,24 +6,27 @@ import com.encontreaqui.model.Servico;
 import com.encontreaqui.repository.ServicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional // Todos os métodos serão transacionais, por padrão de escrita
 public class ServicoService {
 
     @Autowired
     private ServicoRepository servicoRepository;
 
-    // Cria um novo Serviço convertendo o DTO em entidade, salvando e retornando o DTO
+    // Método de escrita: criação. Em caso de exceção, a transação reverte tudo.
     public ServicoDTO criarServico(ServicoDTO servicoDTO) {
         Servico servico = ServicoMapper.INSTANCE.toEntity(servicoDTO);
         Servico salvo = servicoRepository.save(servico);
         return ServicoMapper.INSTANCE.toDTO(salvo);
     }
 
-    // Lista todos os Serviços e os converte para DTO
+    // Método somente de leitura: utiliza readOnly para otimização
+    @Transactional(readOnly = true)
     public List<ServicoDTO> listarServicos() {
         List<Servico> servicos = servicoRepository.findAll();
         return servicos.stream()
@@ -31,14 +34,14 @@ public class ServicoService {
                 .collect(Collectors.toList());
     }
 
-    // Busca um Serviço por ID e converte para DTO, ou lança exceção se não encontrado
+    @Transactional(readOnly = true)
     public ServicoDTO buscarPorId(Long id) {
         Servico servico = servicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
         return ServicoMapper.INSTANCE.toDTO(servico);
     }
 
-    // Atualiza um Serviço: busca o serviço existente, converte os dados do DTO para entidade, preserva o ID e salva
+    // Método de escrita: atualização
     public ServicoDTO atualizarServico(Long id, ServicoDTO servicoDTO) {
         Servico servicoExistente = servicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
@@ -48,10 +51,11 @@ public class ServicoService {
         return ServicoMapper.INSTANCE.toDTO(salvo);
     }
 
-    // Deleta um Serviço após verificar se existe
+    // Método de escrita: deleção
     public void deletarServico(Long id) {
         Servico servico = servicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
         servicoRepository.delete(servico);
     }
 }
+
