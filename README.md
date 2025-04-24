@@ -18,6 +18,7 @@ O **EncontreAqui** é uma plataforma que conecta comerciantes, prestadores de se
 - **MySQL** 🐬 - Banco de dados relacional.
 - **Swagger/OpenAPI** 📄 - Documentação interativa da API.
 - **Lombok** ✨ - Redução de código boilerplate em classes Java.
+- **Docker** ✨ - Para utilizar os conteinres.
 
 ---
 
