@@ -31,6 +31,10 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario")
     private List<Anuncio> anuncios;
 
+    public Usuario() {
+    	
+    }
+    
 	public Usuario(Long id, String nome, String email, String senha, Role role, List<Anuncio> anuncios) {
 		super();
 		this.id = id;
