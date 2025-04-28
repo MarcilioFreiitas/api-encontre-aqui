@@ -97,8 +97,33 @@
 		    <version>2.8.5</version>
 		</dependency>
 
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
 
+		<!-- JJWToken (JJWT): biblioteca para gerar, assinar e validar JWTs -->
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt</artifactId>
+		    <version>0.9.1</version>
+		</dependency>
+		
+		<!-- Dependência JAXB API (necessária para o JJWT utilizar DatatypeConverter) -->
+		<dependency>
+		    <groupId>javax.xml.bind</groupId>
+		    <artifactId>jaxb-api</artifactId>
+		    <version>2.3.1</version>
+		</dependency>
+		
+		<!-- Dependência da implementação JAXB (runtime) -->
+		<dependency>
+		    <groupId>org.glassfish.jaxb</groupId>
+		    <artifactId>jaxb-runtime</artifactId>
+		    <version>2.3.1</version>
+		</dependency>
 
+		
 
 	</dependencies>
 

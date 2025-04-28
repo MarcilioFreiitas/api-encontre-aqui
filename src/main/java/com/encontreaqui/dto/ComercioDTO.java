@@ -1,5 +1,8 @@
 package com.encontreaqui.dto;
 
+import java.util.Date;
+import java.util.List;
+
 public class ComercioDTO {
     private Long id;
     private String titulo;
@@ -9,56 +12,129 @@ public class ComercioDTO {
     private String telefone;
     private String website;
     private String tipoEstabelecimento;
-    
-    // Construtores, getters e setters
-    public ComercioDTO() {}
+    private String categoria; // Novo campo
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getTitulo() {
-        return titulo;
-    }
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-    public String getDescricao() {
-        return descricao;
-    }
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-    public String getEnderecoCompleto() {
-        return enderecoCompleto;
-    }
-    public void setEnderecoCompleto(String enderecoCompleto) {
-        this.enderecoCompleto = enderecoCompleto;
-    }
-    public String getHorarioFuncionamento() {
-        return horarioFuncionamento;
-    }
-    public void setHorarioFuncionamento(String horarioFuncionamento) {
-        this.horarioFuncionamento = horarioFuncionamento;
-    }
-    public String getTelefone() {
-        return telefone;
-    }
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-    public String getWebsite() {
-        return website;
-    }
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-    public String getTipoEstabelecimento() {
-        return tipoEstabelecimento;
-    }
-    public void setTipoEstabelecimento(String tipoEstabelecimento) {
-        this.tipoEstabelecimento = tipoEstabelecimento;
-    }
+    // Campos comuns de controle (opcionais)
+    private Date dataCriacao;
+    private Date dataAtualizacao;
+    
+    // Relacionamento: id do usuário que cadastrou o comércio
+    private Long usuarioId;
+    
+    // Lista de caminhos das fotos, se aplicável
+    private List<String> fotos;
+    
+    // Construtor padrão
+    public ComercioDTO() { }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getTitulo() {
+		return titulo;
+	}
+
+	public void setTitulo(String titulo) {
+		this.titulo = titulo;
+	}
+
+	public String getDescricao() {
+		return descricao;
+	}
+
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
+	}
+
+	public String getEnderecoCompleto() {
+		return enderecoCompleto;
+	}
+
+	public void setEnderecoCompleto(String enderecoCompleto) {
+		this.enderecoCompleto = enderecoCompleto;
+	}
+
+	public String getHorarioFuncionamento() {
+		return horarioFuncionamento;
+	}
+
+	public void setHorarioFuncionamento(String horarioFuncionamento) {
+		this.horarioFuncionamento = horarioFuncionamento;
+	}
+
+	public String getTelefone() {
+		return telefone;
+	}
+
+	public void setTelefone(String telefone) {
+		this.telefone = telefone;
+	}
+
+	public String getWebsite() {
+		return website;
+	}
+
+	public void setWebsite(String website) {
+		this.website = website;
+	}
+
+	public String getTipoEstabelecimento() {
+		return tipoEstabelecimento;
+	}
+
+	public void setTipoEstabelecimento(String tipoEstabelecimento) {
+		this.tipoEstabelecimento = tipoEstabelecimento;
+	}
+
+	public String getCategoria() {
+		return categoria;
+	}
+
+	public void setCategoria(String categoria) {
+		this.categoria = categoria;
+	}
+
+	public Date getDataCriacao() {
+		return dataCriacao;
+	}
+
+	public void setDataCriacao(Date dataCriacao) {
+		this.dataCriacao = dataCriacao;
+	}
+
+	public Date getDataAtualizacao() {
+		return dataAtualizacao;
+	}
+
+	public void setDataAtualizacao(Date dataAtualizacao) {
+		this.dataAtualizacao = dataAtualizacao;
+	}
+
+	public Long getUsuarioId() {
+		return usuarioId;
+	}
+
+	public void setUsuarioId(Long usuarioId) {
+		this.usuarioId = usuarioId;
+	}
+
+	public List<String> getFotos() {
+		return fotos;
+	}
+
+	public void setFotos(List<String> fotos) {
+		this.fotos = fotos;
+	}
+
+    // Getters & Setters
+    // ... (já existentes)
+
+   
+    
+    // (Os demais getters/setters permanecem inalterados)
 }

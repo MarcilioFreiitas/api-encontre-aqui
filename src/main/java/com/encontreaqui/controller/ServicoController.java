@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -67,19 +69,25 @@ public class ServicoController {
 
     @Operation(
         summary = "Atualização de Serviço",
-        description = "Atualiza os dados do anúncio de serviço correspondente ao ID informado, utilizando os novos valores fornecidos no corpo da requisição.",
+        description = "Atualiza os dados do anúncio de serviço correspondente ao ID informado, permitindo gerir as imagens (removendo as existentes e adicionando novas). " +
+                      "Este endpoint consome multipart/form-data onde: " +
+                      "<br>- A parte 'servico' contém os dados do serviço em JSON; " +
+                      "<br>- A parte 'fotosExistentes' (opcional) contém um JSON com os caminhos das fotos a serem mantidas; " +
+                      "<br>- A parte 'novasFotos' (opcional) contém os arquivos das novas fotos.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Serviço atualizado com sucesso",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServicoDTO.class))),
             @ApiResponse(responseCode = "404", description = "Serviço não encontrado", content = @Content)
         }
     )
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicoDTO> atualizarServico(
             @Parameter(description = "ID do anúncio de serviço a ser atualizado", required = true)
             @PathVariable Long id,
-            @Valid @RequestBody ServicoDTO servicoDTO) {
-        ServicoDTO servicoAtualizado = servicoService.atualizarServico(id, servicoDTO);
+            @RequestPart("servico") @Valid ServicoDTO servicoDTO,
+            @RequestPart(value = "novasFotos", required = false) MultipartFile[] novasFotos,
+            @RequestPart(value = "fotosExistentes", required = false) String fotosExistentesJson) {
+        ServicoDTO servicoAtualizado = servicoService.atualizarServico(id, servicoDTO, novasFotos, fotosExistentesJson);
         return ResponseEntity.ok(servicoAtualizado);
     }
 

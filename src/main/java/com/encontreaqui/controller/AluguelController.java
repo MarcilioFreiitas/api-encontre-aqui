@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Content;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -65,19 +67,26 @@ public class AluguelController {
 
     @Operation(
         summary = "Atualização de anúncio de aluguel",
-        description = "Atualiza os dados do anúncio de aluguel correspondente ao ID fornecido com as informações do AluguelDTO.",
+        description = "Atualiza os dados do anúncio de aluguel correspondente ao ID informado, permitindo gerir as imagens (removendo as existentes e adicionando novas). " +
+                      "Este endpoint consome multipart/form-data onde: " +
+                      "<br>- A parte 'aluguel' contém os dados do anúncio em JSON; " +
+                      "<br>- A parte 'fotosExistentes' (opcional) contém um JSON com os caminhos das imagens a serem mantidas; " +
+                      "<br>- A parte 'novasFotos' (opcional) contém os arquivos das novas imagens.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Anúncio atualizado com sucesso",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
             @ApiResponse(responseCode = "404", description = "Anúncio não encontrado", content = @Content)
         }
     )
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AluguelDTO> atualizarAluguel(
             @Parameter(description = "ID do anúncio de aluguel a ser atualizado", required = true)
             @PathVariable Long id,
-            @Valid @RequestBody AluguelDTO aluguelDTO) {
-        return ResponseEntity.ok(aluguelService.atualizarAluguel(id, aluguelDTO));
+            @RequestPart("aluguel") @Valid AluguelDTO aluguelDTO,
+            @RequestPart(value = "novasFotos", required = false) MultipartFile[] novasFotos,
+            @RequestPart(value = "fotosExistentes", required = false) String fotosExistentesJson) {
+        AluguelDTO aluguelAtualizado = aluguelService.atualizarAluguel(id, aluguelDTO, novasFotos, fotosExistentesJson);
+        return ResponseEntity.ok(aluguelAtualizado);
     }
 
     @Operation(

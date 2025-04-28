@@ -5,8 +5,10 @@ import com.encontreaqui.service.ComercioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -21,7 +23,7 @@ public class ComercioController {
 
     @Operation(
         summary = "Criar comércio",
-        description = "Recebe um objeto ComercioDTO no corpo da requisição e cria um novo comércio."
+        description = "Recebe um objeto ComercioDTO no corpo da requisição (JSON) e cria um novo comércio."
     )
     @PostMapping
     public ResponseEntity<ComercioDTO> criarComercio(@Valid @RequestBody ComercioDTO comercioDTO) {
@@ -40,7 +42,7 @@ public class ComercioController {
 
     @Operation(
         summary = "Buscar comércio por ID",
-        description = "Recebe o ID do comércio como parâmetro de caminho e retorna os dados do comércio correspondente."
+        description = "Recebe o ID do comércio e retorna os dados do comércio correspondente."
     )
     @GetMapping("/{id}")
     public ResponseEntity<ComercioDTO> buscarPorId(@PathVariable Long id) {
@@ -48,12 +50,21 @@ public class ComercioController {
     }
 
     @Operation(
-        summary = "Atualizar comércio",
-        description = "Recebe o ID do comércio e um objeto ComercioDTO com os novos dados, atualizando o registro correspondente."
+        summary = "Atualizar comércio com gerenciamento de fotos",
+        description = "Atualiza os dados do comércio, permitindo editar campos e gerenciar fotos – removendo fotos existentes e/ou adicionando novas. " +
+                      "O endpoint consome multipart/form-data, onde: " +
+                      "<br>- A parte 'comercio' contém os dados do comércio em JSON; " +
+                      "<br>- A parte 'fotosExistentes' (opcional) contém um JSON com os caminhos a serem mantidos; " +
+                      "<br>- A parte 'novasFotos' (opcional) contém os arquivos das novas fotos."
     )
-    @PutMapping("/{id}")
-    public ResponseEntity<ComercioDTO> atualizarComercio(@PathVariable Long id, @Valid @RequestBody ComercioDTO comercioDTO) {
-        return ResponseEntity.ok(comercioService.atualizarComercio(id, comercioDTO));
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ComercioDTO> atualizarComercio(
+            @PathVariable Long id,
+            @RequestPart("comercio") @Valid ComercioDTO comercioDTO,
+            @RequestPart(value = "novasFotos", required = false) MultipartFile[] novasFotos,
+            @RequestPart(value = "fotosExistentes", required = false) String fotosExistentesJson) {
+        ComercioDTO atualizado = comercioService.atualizarComercio(id, comercioDTO, novasFotos, fotosExistentesJson);
+        return ResponseEntity.ok(atualizado);
     }
 
     @Operation(

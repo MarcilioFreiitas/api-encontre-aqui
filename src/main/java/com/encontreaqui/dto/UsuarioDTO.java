@@ -8,7 +8,7 @@ public class UsuarioDTO {
     private String email;
     private String role;
     
-    // O campo senha agora é write-only: será considerado apenas na criação/atualização e não será serializado nas respostas
+    // O campo senha é write-only: será considerado na criação/atualização, mas não aparece nas respostas
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String senha;
 
@@ -16,6 +16,7 @@ public class UsuarioDTO {
     public UsuarioDTO() { }
 
     // Getters e Setters
+
     public Long getId() {
         return id;
     }

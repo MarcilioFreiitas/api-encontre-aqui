@@ -6,6 +6,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,16 +41,15 @@ public class ImagemController {
         }
     )
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadImagem(@RequestParam("file") MultipartFile file) {
-        // Salva o arquivo e recupera o nome gerado para ele
+    public ResponseEntity<Map<String, String>> uploadImagem(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
-
-        // Constrói o URI para acesso à imagem, combinando o contexto atual, a pasta e o nome do arquivo
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/")
                 .path(fileName)
                 .toUriString();
-
-        return ResponseEntity.ok("Imagem salva com sucesso: " + fileDownloadUri);
+        Map<String, String> response = new HashMap<>();
+        response.put("url", fileDownloadUri);
+        return ResponseEntity.ok(response);
     }
+
 }

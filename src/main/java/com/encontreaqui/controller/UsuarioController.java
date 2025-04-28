@@ -1,6 +1,9 @@
 package com.encontreaqui.controller;
 
+import com.encontreaqui.dto.LoginDTO;
+import com.encontreaqui.dto.TokenResponseDTO;
 import com.encontreaqui.dto.UsuarioDTO;
+import com.encontreaqui.dto.ProfileUpdateDTO;
 import com.encontreaqui.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,14 +11,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Content;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
-@Tag(name = "Usuário", description = "Endpoints para gerenciamento de usuários")
+/**
+ * Controlador REST para operações relacionadas a Usuário.
+ */
+@Tag(name = "Usuário", description = "Endpoints para gerenciamento, registro, login, atualização (completa e parcial) e exclusão de usuários")
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -24,18 +30,33 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @Operation(
-        summary = "Criação de Usuário",
+        summary = "Registro de Usuário",
         description = "Cria um novo usuário utilizando os dados fornecidos no corpo da requisição.",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
+            @ApiResponse(responseCode = "201", description = "Usuário registrado com sucesso",
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
             @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos", content = @Content)
         }
     )
-    @PostMapping
+    @PostMapping("/registro")
     public ResponseEntity<UsuarioDTO> criarUsuario(@Valid @RequestBody UsuarioDTO usuarioDTO) {
         UsuarioDTO novoUsuario = usuarioService.criarUsuario(usuarioDTO);
         return ResponseEntity.status(201).body(novoUsuario);
+    }
+
+    @Operation(
+        summary = "Login de Usuário",
+        description = "Realiza a autenticação do usuário com base no e-mail e senha fornecidos.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Usuário autenticado com sucesso",
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Credenciais inválidas", content = @Content)
+        }
+    )
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDTO> autenticarUsuario(@Valid @RequestBody LoginDTO loginDTO) {
+        String token = usuarioService.autenticarUsuario(loginDTO);
+        return ResponseEntity.ok(new TokenResponseDTO(token));
     }
 
     @Operation(
@@ -43,7 +64,7 @@ public class UsuarioController {
         description = "Retorna uma lista com todos os usuários cadastrados.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Usuários listados com sucesso",
-                content = @Content(mediaType = "application/json"))
+                         content = @Content(mediaType = "application/json"))
         }
     )
     @GetMapping
@@ -54,10 +75,10 @@ public class UsuarioController {
 
     @Operation(
         summary = "Buscar Usuário por ID",
-        description = "Retorna os dados do usuário correspondente ao ID informado.",
+        description = "Retorna os dados do usuário correspondente ao ID fornecido.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Usuário encontrado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content)
         }
     )
@@ -70,11 +91,11 @@ public class UsuarioController {
     }
 
     @Operation(
-        summary = "Atualização de Usuário",
-        description = "Atualiza os dados do usuário correspondente ao ID informado com as informações do corpo da requisição.",
+        summary = "Atualização Completa de Usuário",
+        description = "Atualiza todos os dados do usuário, incluindo a senha se informada.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
             @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos", content = @Content),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content)
         }
@@ -85,6 +106,25 @@ public class UsuarioController {
             @PathVariable Long id,
             @Valid @RequestBody UsuarioDTO usuarioDTO) {
         UsuarioDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioDTO);
+        return ResponseEntity.ok(usuarioAtualizado);
+    }
+
+    @Operation(
+        summary = "Atualização Parcial do Perfil",
+        description = "Atualiza apenas o nome e o email do usuário, via atualização parcial (PATCH).",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso",
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content)
+        }
+    )
+    @PatchMapping("/{id}/profile")
+    public ResponseEntity<UsuarioDTO> atualizarPerfil(
+            @Parameter(description = "ID do usuário cujo perfil será atualizado", required = true)
+            @PathVariable Long id,
+            @Valid @RequestBody ProfileUpdateDTO profileUpdateDTO) {
+        UsuarioDTO usuarioAtualizado = usuarioService.atualizarPerfil(id, profileUpdateDTO);
         return ResponseEntity.ok(usuarioAtualizado);
     }
 
