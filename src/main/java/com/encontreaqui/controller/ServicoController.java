@@ -25,6 +25,13 @@ public class ServicoController {
     @Autowired
     private ServicoService servicoService;
 
+
+    @GetMapping("/search")
+    public List<ServicoDTO> search(@RequestParam("q") String query) {
+        return servicoService.searchServicos(query);
+    }
+    
+
     @Operation(
         summary = "Criação de Serviço",
         description = "Cria um novo anúncio de serviço utilizando os dados fornecidos no corpo da requisição.",

@@ -14,17 +14,18 @@ public interface ServicoMapper {
 
     ServicoMapper INSTANCE = Mappers.getMapper(ServicoMapper.class);
 
-    // Converte a entidade para o DTO
+    // Converter Servico para ServicoDTO: mapeia o id do usuário e a lista de fotos; ignora mediaAvaliacoes.
     @Mapping(target = "usuarioId", source = "usuario.id")
     @Mapping(target = "fotos", expression = "java(mapFotos(servico.getFotos()))")
+    @Mapping(target = "mediaAvaliacoes", ignore = true)
     ServicoDTO toDTO(Servico servico);
 
-    // Converte o DTO para a entidade e ignora a associação do usuário
+    // Converter ServicoDTO para Servico, ignorando a associação do usuário, e mapeando a lista de fotos.
     @Mapping(target = "usuario", ignore = true)
     @Mapping(target = "fotos", expression = "java(mapStringToFotos(servicoDTO.getFotos()))")
     Servico toEntity(ServicoDTO servicoDTO);
 
-    // Método para mapear List<Foto> para List<String> (caminhos)
+    // Mapeia List<Foto> para List<String>
     default List<String> mapFotos(List<Foto> fotos) {
         if (fotos == null) {
             return null;
@@ -34,7 +35,7 @@ public interface ServicoMapper {
                     .collect(Collectors.toList());
     }
 
-    // Método para mapear List<String> para List<Foto>
+    // Mapeia List<String> para List<Foto>
     default List<Foto> mapStringToFotos(List<String> caminhos) {
         if (caminhos == null) {
             return null;

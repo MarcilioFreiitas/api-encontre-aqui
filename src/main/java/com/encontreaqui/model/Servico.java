@@ -1,6 +1,7 @@
 package com.encontreaqui.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.ConstraintMode;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -67,10 +68,11 @@ public class Servico {
     @OneToMany(mappedBy = "servico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Foto> fotos;
 
-    // Construtor padrão
+    // Removemos o mapeamento polimórfico das avaliações para evitar a criação de FK
+    // Caso necessário, as avaliações devem ser consultadas de forma independente (por exemplo, via AvaliacaoRepository).
+
     public Servico() { }
 
-    // Construtor completo
     public Servico(Long id, String titulo, String descricao, BigDecimal preco, String categoria, String localizacao,
                    Date dataCriacao, Date dataAtualizacao, String areaAtuacao, Integer tempoMedioAtendimento,
                    Boolean necessitaAgendamento, String profissionalResponsavel, Usuario usuario, List<Foto> fotos) {
@@ -95,111 +97,84 @@ public class Servico {
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     public String getTitulo() {
         return titulo;
     }
-
     public void setTitulo(String titulo) {
         this.titulo = titulo;
     }
-
     public String getDescricao() {
         return descricao;
     }
-
     public void setDescricao(String descricao) {
         this.descricao = descricao;
     }
-
     public BigDecimal getPreco() {
         return preco;
     }
-
     public void setPreco(BigDecimal preco) {
         this.preco = preco;
     }
-
     public String getCategoria() {
         return categoria;
     }
-
     public void setCategoria(String categoria) {
         this.categoria = categoria;
     }
-
     public String getLocalizacao() {
         return localizacao;
     }
-
     public void setLocalizacao(String localizacao) {
         this.localizacao = localizacao;
     }
-
     public Date getDataCriacao() {
         return dataCriacao;
     }
-
     public void setDataCriacao(Date dataCriacao) {
         this.dataCriacao = dataCriacao;
     }
-
     public Date getDataAtualizacao() {
         return dataAtualizacao;
     }
-
     public void setDataAtualizacao(Date dataAtualizacao) {
         this.dataAtualizacao = dataAtualizacao;
     }
-
     public String getAreaAtuacao() {
         return areaAtuacao;
     }
-
     public void setAreaAtuacao(String areaAtuacao) {
         this.areaAtuacao = areaAtuacao;
     }
-
     public Integer getTempoMedioAtendimento() {
         return tempoMedioAtendimento;
     }
-
     public void setTempoMedioAtendimento(Integer tempoMedioAtendimento) {
         this.tempoMedioAtendimento = tempoMedioAtendimento;
     }
-
     public Boolean getNecessitaAgendamento() {
         return necessitaAgendamento;
     }
-
     public void setNecessitaAgendamento(Boolean necessitaAgendamento) {
         this.necessitaAgendamento = necessitaAgendamento;
     }
-
     public String getProfissionalResponsavel() {
         return profissionalResponsavel;
     }
-
     public void setProfissionalResponsavel(String profissionalResponsavel) {
         this.profissionalResponsavel = profissionalResponsavel;
     }
-
     public Usuario getUsuario() {
         return usuario;
     }
-
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }
-
     public List<Foto> getFotos() {
         return fotos;
     }
-
     public void setFotos(List<Foto> fotos) {
         this.fotos = fotos;
     }

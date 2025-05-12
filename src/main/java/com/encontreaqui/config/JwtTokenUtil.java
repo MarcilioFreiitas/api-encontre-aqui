@@ -38,12 +38,18 @@ public class JwtTokenUtil {
     
     // Extrai o id do usuário a partir do claim "id" do token
     public String getUserIdFromJwtToken(String token) {
-        return Jwts.parser()
-                   .setSigningKey(jwtSecret)
-                   .parseClaimsJws(token)
-                   .getBody()
-                   .get("id", String.class);
+        Object idClaim = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody()
+                .get("id");
+        if (idClaim instanceof Number) {
+            return String.valueOf(((Number) idClaim).longValue());
+        } else {
+            return idClaim.toString();
+        }
     }
+
 
     // Valida o token JWT e retorna se ele é válido ou não
     public boolean validateJwtToken(String authToken) {

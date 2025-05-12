@@ -34,9 +34,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/comercios").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/comercios/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/servicos").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/servicos/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/servicos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/alugueis").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/alugueis/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/avaliacoes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/item").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/avaliacoes/responder").permitAll()
                 // Outras requisições precisam de autenticação
                 .anyRequest().authenticated()
             );

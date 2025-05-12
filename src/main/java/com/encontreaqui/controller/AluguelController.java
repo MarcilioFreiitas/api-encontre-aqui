@@ -24,6 +24,19 @@ public class AluguelController {
 
     @Autowired
     private AluguelService aluguelService;
+    
+    
+    @Operation(
+            summary = "Pesquisar anúncios de aluguel",
+            description = "Retorna os anúncios de aluguel cujo título ou categoria contenha o termo de pesquisa (ignorando case)."
+        )
+        @GetMapping("/search")
+        public ResponseEntity<List<AluguelDTO>> search(@RequestParam("q") String query) {
+            List<AluguelDTO> result = aluguelService.searchAlugueis(query);
+            return ResponseEntity.ok(result);
+        }
+    
+    
 
     @Operation(
         summary = "Criação de anúncio de aluguel",

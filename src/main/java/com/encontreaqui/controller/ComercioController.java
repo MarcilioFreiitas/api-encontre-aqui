@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -75,5 +74,15 @@ public class ComercioController {
     public ResponseEntity<Void> deletarComercio(@PathVariable Long id) {
         comercioService.deletarComercio(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @Operation(
+        summary = "Pesquisar comércio por título ou categoria",
+        description = "Retorna os comércios cujo título ou categoria contenha o termo de pesquisa, ignorando maiúsculas/minúsculas."
+    )
+    @GetMapping("/search")
+    public ResponseEntity<List<ComercioDTO>> search(@RequestParam("q") String query) {
+        List<ComercioDTO> result = comercioService.searchComercios(query);
+        return ResponseEntity.ok(result);
     }
 }

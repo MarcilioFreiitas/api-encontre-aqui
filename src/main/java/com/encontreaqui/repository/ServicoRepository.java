@@ -1,14 +1,13 @@
 package com.encontreaqui.repository;
 
-
-
+import com.encontreaqui.model.Servico;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.encontreaqui.model.Servico;
-
-
 @Repository
 public interface ServicoRepository extends JpaRepository<Servico, Long> {
-    // Adicione métodos customizados para buscar serviços
+    
+    // Retorna os serviços cujo título ou categoria contenha a string fornecida (ignora case)
+    List<Servico> findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(String titulo, String categoria);
 }
