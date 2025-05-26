@@ -1,10 +1,7 @@
 package com.encontreaqui.model;
 
 import jakarta.persistence.*;
-import jakarta.persistence.ConstraintMode;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +21,7 @@ public class Aluguel {
 
     @Column(columnDefinition = "TEXT")
     private String descricao;
-    
+
     @NotNull(message = "A categoria não pode ser nula.")
     @Size(min = 1, max = 100, message = "A categoria deve ter entre 1 e 100 caracteres.")
     private String categoria;
@@ -55,16 +52,16 @@ public class Aluguel {
     @NotNull(message = "O período mínimo de contrato não pode ser nulo.")
     @Size(min = 3, max = 100, message = "O período mínimo de contrato deve ter entre 3 e 100 caracteres.")
     private String periodoMinimoContrato;
-    
+
     @Positive(message = "O número de banheiros deve ser um valor positivo.")
     private Integer numeroDeBanheiros;
-    
+
     @Positive(message = "O número de vagas deve ser um valor positivo.")
     private Integer numeroDeVagas;
-    
+
     @Temporal(TemporalType.DATE)
     private Date dataDisponibilidade;
-    
+
     private String status;
 
     // Relacionamento com as fotos do aluguel
@@ -75,38 +72,15 @@ public class Aluguel {
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
-    
-    // REMOVIDO: O mapeamento polimórfico de avaliações
-    // Para obter as avaliações associadas a este aluguel, utilize um repositório de Avaliacao
-    // filtrando por: tipoItem = "aluguel" e itemId igual ao id deste aluguel.
-    
-    public Aluguel() { }
 
-    public Aluguel(Long id, String titulo, String descricao, String enderecoCompleto, BigDecimal valorAluguel,
-                   Integer numeroDeQuartos, Double areaEmM2, Boolean mobiliado, BigDecimal valorCaucao,
-                   String periodoMinimoContrato, Integer numeroDeBanheiros, Integer numeroDeVagas, Date dataDisponibilidade,
-                   String status, String categoria, List<Foto> fotos, Usuario usuario) {
-        this.id = id;
-        this.titulo = titulo;
-        this.descricao = descricao;
-        this.categoria = categoria;
-        this.enderecoCompleto = enderecoCompleto;
-        this.valorAluguel = valorAluguel;
-        this.numeroDeQuartos = numeroDeQuartos;
-        this.areaEmM2 = areaEmM2;
-        this.mobiliado = mobiliado;
-        this.valorCaucao = valorCaucao;
-        this.periodoMinimoContrato = periodoMinimoContrato;
-        this.numeroDeBanheiros = numeroDeBanheiros;
-        this.numeroDeVagas = numeroDeVagas;
-        this.dataDisponibilidade = dataDisponibilidade;
-        this.status = status;
-        this.fotos = fotos;
-        this.usuario = usuario;
+    // === Campos de moderação ===
+    private boolean flagged = false;
+    private String flagReason;
+
+    public Aluguel() {
     }
 
-    // Getters e Setters
-
+    // getters e setters existentes
     public Long getId() {
         return id;
     }
@@ -208,5 +182,18 @@ public class Aluguel {
     }
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+    // getters e setters dos campos de moderação
+    public boolean isFlagged() {
+        return flagged;
+    }
+    public void setFlagged(boolean flagged) {
+        this.flagged = flagged;
+    }
+    public String getFlagReason() {
+        return flagReason;
+    }
+    public void setFlagReason(String flagReason) {
+        this.flagReason = flagReason;
     }
 }

@@ -24,8 +24,12 @@ public class ComercioDTO {
     // Lista de caminhos das fotos
     private List<String> fotos;
     
-    // Média das avaliações (estrelas) para exibição
+    // Média das avaliações para exibição
     private Double mediaAvaliacoes;
+
+    // Campos para moderação
+    private boolean flagged;
+    private String flagReason;
 
     public ComercioDTO() { }
 
@@ -139,5 +143,21 @@ public class ComercioDTO {
 
     public void setMediaAvaliacoes(Double mediaAvaliacoes) {
         this.mediaAvaliacoes = mediaAvaliacoes;
+    }
+
+    public boolean isFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(boolean flagged) {
+        this.flagged = flagged;
+    }
+
+    public String getFlagReason() {
+        return flagReason;
+    }
+
+    public void setFlagReason(String flagReason) {
+        this.flagReason = flagReason;
     }
 }

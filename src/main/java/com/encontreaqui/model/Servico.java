@@ -1,7 +1,6 @@
 package com.encontreaqui.model;
 
 import jakarta.persistence.*;
-import jakarta.persistence.ConstraintMode;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -17,7 +16,6 @@ public class Servico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Campos comuns do anúncio
     @NotNull(message = "O título não pode ser nulo.")
     @Size(min = 3, max = 255, message = "O título deve ter entre 3 e 255 caracteres.")
     private String titulo;
@@ -43,7 +41,6 @@ public class Servico {
     @Temporal(TemporalType.TIMESTAMP)
     private Date dataAtualizacao;
 
-    // Campos específicos do serviço
     @NotNull(message = "A área de atuação não pode ser nula.")
     @Size(min = 3, max = 100, message = "A área de atuação deve ter entre 3 e 100 caracteres.")
     private String areaAtuacao;
@@ -59,17 +56,18 @@ public class Servico {
     @Size(min = 3, max = 100, message = "O nome do profissional responsável deve ter entre 3 e 100 caracteres.")
     private String profissionalResponsavel;
 
-    // Relacionamento com o usuário que cadastrou o serviço
+    // Associação com o usuário
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    // Relacionamento com as fotos do serviço
+    // Associação com fotos
     @OneToMany(mappedBy = "servico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Foto> fotos;
 
-    // Removemos o mapeamento polimórfico das avaliações para evitar a criação de FK
-    // Caso necessário, as avaliações devem ser consultadas de forma independente (por exemplo, via AvaliacaoRepository).
+    // Campos de moderação
+    private boolean flagged = false;
+    private String flagReason;
 
     public Servico() { }
 
@@ -92,90 +90,52 @@ public class Servico {
         this.fotos = fotos;
     }
 
-    // Getters e Setters
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getTitulo() {
-        return titulo;
-    }
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-    public String getDescricao() {
-        return descricao;
-    }
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-    public BigDecimal getPreco() {
-        return preco;
-    }
-    public void setPreco(BigDecimal preco) {
-        this.preco = preco;
-    }
-    public String getCategoria() {
-        return categoria;
-    }
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-    public String getLocalizacao() {
-        return localizacao;
-    }
-    public void setLocalizacao(String localizacao) {
-        this.localizacao = localizacao;
-    }
-    public Date getDataCriacao() {
-        return dataCriacao;
-    }
-    public void setDataCriacao(Date dataCriacao) {
-        this.dataCriacao = dataCriacao;
-    }
-    public Date getDataAtualizacao() {
-        return dataAtualizacao;
-    }
-    public void setDataAtualizacao(Date dataAtualizacao) {
-        this.dataAtualizacao = dataAtualizacao;
-    }
-    public String getAreaAtuacao() {
-        return areaAtuacao;
-    }
-    public void setAreaAtuacao(String areaAtuacao) {
-        this.areaAtuacao = areaAtuacao;
-    }
-    public Integer getTempoMedioAtendimento() {
-        return tempoMedioAtendimento;
-    }
-    public void setTempoMedioAtendimento(Integer tempoMedioAtendimento) {
-        this.tempoMedioAtendimento = tempoMedioAtendimento;
-    }
-    public Boolean getNecessitaAgendamento() {
-        return necessitaAgendamento;
-    }
-    public void setNecessitaAgendamento(Boolean necessitaAgendamento) {
-        this.necessitaAgendamento = necessitaAgendamento;
-    }
-    public String getProfissionalResponsavel() {
-        return profissionalResponsavel;
-    }
-    public void setProfissionalResponsavel(String profissionalResponsavel) {
-        this.profissionalResponsavel = profissionalResponsavel;
-    }
-    public Usuario getUsuario() {
-        return usuario;
-    }
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-    public List<Foto> getFotos() {
-        return fotos;
-    }
-    public void setFotos(List<Foto> fotos) {
-        this.fotos = fotos;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public BigDecimal getPreco() { return preco; }
+    public void setPreco(BigDecimal preco) { this.preco = preco; }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+
+    public String getLocalizacao() { return localizacao; }
+    public void setLocalizacao(String localizacao) { this.localizacao = localizacao; }
+
+    public Date getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(Date dataCriacao) { this.dataCriacao = dataCriacao; }
+
+    public Date getDataAtualizacao() { return dataAtualizacao; }
+    public void setDataAtualizacao(Date dataAtualizacao) { this.dataAtualizacao = dataAtualizacao; }
+
+    public String getAreaAtuacao() { return areaAtuacao; }
+    public void setAreaAtuacao(String areaAtuacao) { this.areaAtuacao = areaAtuacao; }
+
+    public Integer getTempoMedioAtendimento() { return tempoMedioAtendimento; }
+    public void setTempoMedioAtendimento(Integer tempoMedioAtendimento) { this.tempoMedioAtendimento = tempoMedioAtendimento; }
+
+    public Boolean getNecessitaAgendamento() { return necessitaAgendamento; }
+    public void setNecessitaAgendamento(Boolean necessitaAgendamento) { this.necessitaAgendamento = necessitaAgendamento; }
+
+    public String getProfissionalResponsavel() { return profissionalResponsavel; }
+    public void setProfissionalResponsavel(String profissionalResponsavel) { this.profissionalResponsavel = profissionalResponsavel; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public List<Foto> getFotos() { return fotos; }
+    public void setFotos(List<Foto> fotos) { this.fotos = fotos; }
+
+    public boolean isFlagged() { return flagged; }
+    public void setFlagged(boolean flagged) { this.flagged = flagged; }
+
+    public String getFlagReason() { return flagReason; }
+    public void setFlagReason(String flagReason) { this.flagReason = flagReason; }
 }

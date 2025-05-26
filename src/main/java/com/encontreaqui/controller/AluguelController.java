@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,33 +24,15 @@ public class AluguelController {
 
     @Autowired
     private AluguelService aluguelService;
-    
-    
-    @Operation(
-            summary = "Pesquisar anúncios de aluguel",
-            description = "Retorna os anúncios de aluguel cujo título ou categoria contenha o termo de pesquisa (ignorando case)."
-        )
-        @GetMapping("/search")
-        public ResponseEntity<List<AluguelDTO>> search(@RequestParam("q") String query) {
-            List<AluguelDTO> result = aluguelService.searchAlugueis(query);
-            return ResponseEntity.ok(result);
-        }
-    
-    
 
     @Operation(
-        summary = "Criação de anúncio de aluguel",
-        description = "Cria e cadastra um novo anúncio de aluguel utilizando os dados fornecidos em AluguelDTO.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Anúncio de aluguel criado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Erro de validação nos dados informados", content = @Content)
-        }
+        summary = "Pesquisar anúncios de aluguel",
+        description = "Retorna os anúncios de aluguel cujo título ou categoria contenha o termo de pesquisa (ignorando case)."
     )
-    @PostMapping
-    public ResponseEntity<AluguelDTO> criarAluguel(@Valid @RequestBody AluguelDTO aluguelDTO) {
-        AluguelDTO novoAluguel = aluguelService.criarAluguel(aluguelDTO);
-        return ResponseEntity.ok(novoAluguel);
+    @GetMapping("/search")
+    public ResponseEntity<List<AluguelDTO>> search(@RequestParam("q") String query) {
+        List<AluguelDTO> result = aluguelService.searchAlugueis(query);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(
@@ -63,11 +45,11 @@ public class AluguelController {
     }
 
     @Operation(
-        summary = "Busca de anúncio de aluguel por ID",
+        summary = "Buscar anúncio por ID",
         description = "Retorna os dados do anúncio de aluguel correspondente ao ID informado.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Anúncio encontrado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
             @ApiResponse(responseCode = "404", description = "Anúncio não encontrado", content = @Content)
         }
     )
@@ -79,15 +61,26 @@ public class AluguelController {
     }
 
     @Operation(
+        summary = "Criação de anúncio de aluguel",
+        description = "Cria e cadastra um novo anúncio de aluguel.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Anúncio de aluguel criado com sucesso",
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Erro de validação nos dados informados", content = @Content)
+        }
+    )
+    @PostMapping
+    public ResponseEntity<AluguelDTO> criarAluguel(
+            @Valid @RequestBody AluguelDTO aluguelDTO) {
+        return ResponseEntity.ok(aluguelService.criarAluguel(aluguelDTO));
+    }
+
+    @Operation(
         summary = "Atualização de anúncio de aluguel",
-        description = "Atualiza os dados do anúncio de aluguel correspondente ao ID informado, permitindo gerir as imagens (removendo as existentes e adicionando novas). " +
-                      "Este endpoint consome multipart/form-data onde: " +
-                      "<br>- A parte 'aluguel' contém os dados do anúncio em JSON; " +
-                      "<br>- A parte 'fotosExistentes' (opcional) contém um JSON com os caminhos das imagens a serem mantidas; " +
-                      "<br>- A parte 'novasFotos' (opcional) contém os arquivos das novas imagens.",
+        description = "Atualiza os dados do anúncio de aluguel, com gerenciamento de imagens.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Anúncio atualizado com sucesso",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = AluguelDTO.class))),
             @ApiResponse(responseCode = "404", description = "Anúncio não encontrado", content = @Content)
         }
     )
@@ -97,9 +90,11 @@ public class AluguelController {
             @PathVariable Long id,
             @RequestPart("aluguel") @Valid AluguelDTO aluguelDTO,
             @RequestPart(value = "novasFotos", required = false) MultipartFile[] novasFotos,
-            @RequestPart(value = "fotosExistentes", required = false) String fotosExistentesJson) {
-        AluguelDTO aluguelAtualizado = aluguelService.atualizarAluguel(id, aluguelDTO, novasFotos, fotosExistentesJson);
-        return ResponseEntity.ok(aluguelAtualizado);
+            @RequestPart(value = "fotosExistentes", required = false) String fotosExistentesJson
+    ) {
+        return ResponseEntity.ok(
+            aluguelService.atualizarAluguel(id, aluguelDTO, novasFotos, fotosExistentesJson)
+        );
     }
 
     @Operation(
@@ -113,8 +108,39 @@ public class AluguelController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarAluguel(
             @Parameter(description = "ID do anúncio de aluguel a ser excluído", required = true)
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
         aluguelService.deletarAluguel(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // === Endpoints de moderação ===
+
+    @Operation(
+        summary = "Listar anúncios sinalizados",
+        description = "Retorna a lista de anúncios de aluguel sinalizados para moderação."
+    )
+    @GetMapping("/flagged")
+    public ResponseEntity<List<AluguelDTO>> listarFlagged() {
+        return ResponseEntity.ok(aluguelService.listarAnunciosSinalizados());
+    }
+
+    @Operation(
+        summary = "Remover anúncio sinalizado",
+        description = "Remove um anúncio sinalizado (moderação)."
+    )
+    @DeleteMapping("/flagged/{id}")
+    public ResponseEntity<Void> removerFlagged(@PathVariable Long id) {
+        aluguelService.removeAnuncioSinalizado(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Restaurar anúncio sinalizado",
+        description = "Restaura um anúncio sinalizado, limpando a flag.")
+    @PostMapping("/flagged/{id}/restore")
+    public ResponseEntity<Void> restaurarFlagged(@PathVariable Long id) {
+        aluguelService.restaurarAnuncio(id);
+        return ResponseEntity.ok().build();
     }
 }

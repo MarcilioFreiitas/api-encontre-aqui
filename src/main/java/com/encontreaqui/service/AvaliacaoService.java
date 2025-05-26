@@ -10,11 +10,12 @@ import com.encontreaqui.repository.AvaliacaoRepository;
 import com.encontreaqui.repository.ComercioRepository;
 import com.encontreaqui.repository.ServicoRepository;
 import com.encontreaqui.repository.UsuarioRepository;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional

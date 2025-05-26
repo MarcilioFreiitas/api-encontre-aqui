@@ -1,7 +1,6 @@
 package com.encontreaqui.model;
 
 import jakarta.persistence.*;
-import jakarta.persistence.ConstraintMode;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -62,15 +61,15 @@ public class Comercio {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    // Note que NÃO estamos mapeando a coleção de avaliações nesta entidade.
-    // Dessa forma, evitamos conflitos de FK no schema polimórfico.
-    // Para obter as avaliações do comércio, utilize um método no repositório:
-    //    List<Avaliacao> findByTipoItemAndItemId("comercio", id);
+    // === Campos de moderação ===
+    private boolean flagged = false;
+    private String flagReason;
 
     public Comercio() { }
 
-    public Comercio(Long id, String titulo, String descricao, String enderecoCompleto, String horarioFuncionamento,
-                    String telefone, String website, String tipoEstabelecimento, String categoria, Date dataCriacao,
+    public Comercio(Long id, String titulo, String descricao, String enderecoCompleto,
+                    String horarioFuncionamento, String telefone, String website,
+                    String tipoEstabelecimento, String categoria, Date dataCriacao,
                     Date dataAtualizacao, List<Foto> fotos, Usuario usuario) {
         this.id = id;
         this.titulo = titulo;
@@ -88,83 +87,49 @@ public class Comercio {
     }
 
     // Getters e Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getTitulo() {
-        return titulo;
-    }
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-    public String getDescricao() {
-        return descricao;
-    }
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-    public String getEnderecoCompleto() {
-        return enderecoCompleto;
-    }
-    public void setEnderecoCompleto(String enderecoCompleto) {
-        this.enderecoCompleto = enderecoCompleto;
-    }
-    public String getHorarioFuncionamento() {
-        return horarioFuncionamento;
-    }
-    public void setHorarioFuncionamento(String horarioFuncionamento) {
-        this.horarioFuncionamento = horarioFuncionamento;
-    }
-    public String getTelefone() {
-        return telefone;
-    }
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-    public String getWebsite() {
-        return website;
-    }
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-    public String getTipoEstabelecimento() {
-        return tipoEstabelecimento;
-    }
-    public void setTipoEstabelecimento(String tipoEstabelecimento) {
-        this.tipoEstabelecimento = tipoEstabelecimento;
-    }
-    public String getCategoria() {
-        return categoria;
-    }
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-    public Date getDataCriacao() {
-        return dataCriacao;
-    }
-    public void setDataCriacao(Date dataCriacao) {
-        this.dataCriacao = dataCriacao;
-    }
-    public Date getDataAtualizacao() {
-        return dataAtualizacao;
-    }
-    public void setDataAtualizacao(Date dataAtualizacao) {
-        this.dataAtualizacao = dataAtualizacao;
-    }
-    public List<Foto> getFotos() {
-        return fotos;
-    }
-    public void setFotos(List<Foto> fotos) {
-        this.fotos = fotos;
-    }
-    public Usuario getUsuario() {
-        return usuario;
-    }
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public String getEnderecoCompleto() { return enderecoCompleto; }
+    public void setEnderecoCompleto(String enderecoCompleto) { this.enderecoCompleto = enderecoCompleto; }
+
+    public String getHorarioFuncionamento() { return horarioFuncionamento; }
+    public void setHorarioFuncionamento(String horarioFuncionamento) { this.horarioFuncionamento = horarioFuncionamento; }
+
+    public String getTelefone() { return telefone; }
+    public void setTelefone(String telefone) { this.telefone = telefone; }
+
+    public String getWebsite() { return website; }
+    public void setWebsite(String website) { this.website = website; }
+
+    public String getTipoEstabelecimento() { return tipoEstabelecimento; }
+    public void setTipoEstabelecimento(String tipoEstabelecimento) { this.tipoEstabelecimento = tipoEstabelecimento; }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+
+    public Date getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(Date dataCriacao) { this.dataCriacao = dataCriacao; }
+
+    public Date getDataAtualizacao() { return dataAtualizacao; }
+    public void setDataAtualizacao(Date dataAtualizacao) { this.dataAtualizacao = dataAtualizacao; }
+
+    public List<Foto> getFotos() { return fotos; }
+    public void setFotos(List<Foto> fotos) { this.fotos = fotos; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    // Getters e setters dos campos de moderação
+    public boolean isFlagged() { return flagged; }
+    public void setFlagged(boolean flagged) { this.flagged = flagged; }
+
+    public String getFlagReason() { return flagReason; }
+    public void setFlagReason(String flagReason) { this.flagReason = flagReason; }
 }

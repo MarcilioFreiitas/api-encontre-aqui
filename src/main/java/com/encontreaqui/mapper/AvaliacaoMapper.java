@@ -11,11 +11,13 @@ public interface AvaliacaoMapper {
 
     AvaliacaoMapper INSTANCE = Mappers.getMapper(AvaliacaoMapper.class);
 
-    // Converter a entidade Avaliacao para AvaliacaoDTO
     @Mapping(source = "usuario.id", target = "usuarioId")
+    @Mapping(source = "flagged", target = "flagged")
+    @Mapping(source = "flagReason", target = "flagReason")
     AvaliacaoDTO toDTO(Avaliacao avaliacao);
 
-    // Converter AvaliacaoDTO para a entidade Avaliacao
     @Mapping(source = "usuarioId", target = "usuario.id")
+    @Mapping(source = "flagged", target = "flagged")
+    @Mapping(source = "flagReason", target = "flagReason")
     Avaliacao toEntity(AvaliacaoDTO avaliacaoDTO);
 }

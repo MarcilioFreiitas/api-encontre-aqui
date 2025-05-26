@@ -5,27 +5,50 @@ import com.encontreaqui.model.Foto;
 import com.encontreaqui.model.Servico;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper para conversão entre entidade Servico e ServicoDTO,
+ * incluindo campos de moderação e relacionamento.
+ */
 @Mapper(componentModel = "spring")
 public interface ServicoMapper {
 
     ServicoMapper INSTANCE = Mappers.getMapper(ServicoMapper.class);
 
-    // Converter Servico para ServicoDTO: mapeia o id do usuário e a lista de fotos; ignora mediaAvaliacoes.
-    @Mapping(target = "usuarioId", source = "usuario.id")
-    @Mapping(target = "fotos", expression = "java(mapFotos(servico.getFotos()))")
-    @Mapping(target = "mediaAvaliacoes", ignore = true)
+    /**
+     * Converte Servico em ServicoDTO, mapeando campos básicos, lista de fotos e moderação.
+     */
+    @Mappings({
+        @Mapping(source = "usuario.id", target = "usuarioId"),
+        @Mapping(target = "fotos", expression = "java(mapFotos(servico.getFotos()))"),
+        @Mapping(source = "flagged", target = "flagged"),
+        @Mapping(source = "flagReason", target = "flagReason"),
+        @Mapping(source = "dataCriacao", target = "dataCriacao"),
+        @Mapping(source = "dataAtualizacao", target = "dataAtualizacao")
+    })
     ServicoDTO toDTO(Servico servico);
 
-    // Converter ServicoDTO para Servico, ignorando a associação do usuário, e mapeando a lista de fotos.
-    @Mapping(target = "usuario", ignore = true)
-    @Mapping(target = "fotos", expression = "java(mapStringToFotos(servicoDTO.getFotos()))")
+    /**
+     * Converte ServicoDTO em Servico, ignorando associação de usuário,
+     * mapeando lista de fotos e campos de moderação.
+     */
+    @Mappings({
+        @Mapping(target = "usuario", ignore = true),
+        @Mapping(target = "fotos", expression = "java(mapStringToFotos(servicoDTO.getFotos()))"),
+        @Mapping(source = "flagged", target = "flagged"),
+        @Mapping(source = "flagReason", target = "flagReason"),
+        @Mapping(source = "dataCriacao", target = "dataCriacao"),
+        @Mapping(source = "dataAtualizacao", target = "dataAtualizacao")
+    })
     Servico toEntity(ServicoDTO servicoDTO);
 
-    // Mapeia List<Foto> para List<String>
+    /**
+     * Mapeia lista de entidades Foto para lista de caminhos.
+     */
     default List<String> mapFotos(List<Foto> fotos) {
         if (fotos == null) {
             return null;
@@ -35,7 +58,9 @@ public interface ServicoMapper {
                     .collect(Collectors.toList());
     }
 
-    // Mapeia List<String> para List<Foto>
+    /**
+     * Mapeia lista de caminhos para entidades Foto.
+     */
     default List<Foto> mapStringToFotos(List<String> caminhos) {
         if (caminhos == null) {
             return null;

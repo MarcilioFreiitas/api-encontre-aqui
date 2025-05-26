@@ -5,20 +5,22 @@ import com.encontreaqui.mapper.ServicoMapper;
 import com.encontreaqui.model.Foto;
 import com.encontreaqui.model.Servico;
 import com.encontreaqui.model.Usuario;
-import com.encontreaqui.model.Avaliacao;
+import com.encontreaqui.repository.AvaliacaoRepository;
 import com.encontreaqui.repository.ServicoRepository;
 import com.encontreaqui.repository.UsuarioRepository;
-import com.encontreaqui.repository.AvaliacaoRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,171 +29,172 @@ import java.util.stream.Collectors;
 @Transactional
 public class ServicoService {
 
-    @Autowired
-    private ServicoRepository servicoRepository;
-    
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    
-    @Autowired
-    private AvaliacaoRepository avaliacaoRepository; // Para buscar as avaliações e calcular a média
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ServicoRepository servicoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
+    private final ObjectMapper objectMapper;
 
     private static final String UPLOAD_DIR = "uploads";
     private static final String BASE_URL = "http://localhost:8080";
 
-    // Metodo para criar um novo serviço
-    public ServicoDTO criarServico(ServicoDTO servicoDTO) {
-        Servico servico = ServicoMapper.INSTANCE.toEntity(servicoDTO);
-        if (servicoDTO.getUsuarioId() != null) {
-            Usuario usuario = usuarioRepository.findById(servicoDTO.getUsuarioId())
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
-            servico.setUsuario(usuario);
-        } else {
-            throw new RuntimeException("Campo usuarioId é obrigatório.");
-        }
-        if (servico.getFotos() != null) {
-            servico.getFotos().forEach(foto -> foto.setServico(servico));
-        }
+    @Autowired
+    public ServicoService(ServicoRepository servicoRepository,
+                          UsuarioRepository usuarioRepository,
+                          AvaliacaoRepository avaliacaoRepository) {
+        this.servicoRepository = servicoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public ServicoDTO criarServico(ServicoDTO dto) {
+        Servico servico = ServicoMapper.INSTANCE.toEntity(dto);
+        associateUsuario(servico, dto.getUsuarioId());
         servico.setDataCriacao(new Date());
         servico.setDataAtualizacao(new Date());
+        servico.setFlagged(false);
+        servico.setFlagReason(null);
+        servico.setFotos(initFotos(servico, dto.getFotos()));
+
         Servico salvo = servicoRepository.save(servico);
-        ServicoDTO dto = ServicoMapper.INSTANCE.toDTO(salvo);
-        dto.setMediaAvaliacoes(0.0);
-        return dto;
+        return toDtoWithRating(salvo);
     }
 
-    // Método para listar todos os serviços com cálculo da média das avaliações
     @Transactional(readOnly = true)
     public List<ServicoDTO> listarServicos() {
-        List<Servico> servicos = servicoRepository.findAll();
-        List<ServicoDTO> dtos = servicos.stream()
-                .map(ServicoMapper.INSTANCE::toDTO)
+        return servicoRepository.findAll().stream()
+                .map(this::toDtoWithRating)
                 .collect(Collectors.toList());
-        for (ServicoDTO dto : dtos) {
-            List<Avaliacao> avaliacoes = avaliacaoRepository.findByTipoItemAndItemId("servico", dto.getId());
-            Double media = 0.0;
-            if (avaliacoes != null && !avaliacoes.isEmpty()) {
-                media = avaliacoes.stream().mapToDouble(a -> a.getNota()).average().orElse(0.0);
-            }
-            dto.setMediaAvaliacoes(media);
-        }
-        return dtos;
     }
 
-    // Método para buscar um serviço por ID e calcular a média das avaliações
     @Transactional(readOnly = true)
     public ServicoDTO buscarPorId(Long id) {
         Servico servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado id=" + id));
+        return toDtoWithRating(servico);
+    }
+
+    public ServicoDTO atualizarServico(Long id, ServicoDTO dto,
+                                       MultipartFile[] novasFotos,
+                                       String fotosExistentesJson) {
+        Servico existente = servicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado id=" + id));
+        Servico upd = ServicoMapper.INSTANCE.toEntity(dto);
+        upd.setId(id);
+        upd.setDataCriacao(existente.getDataCriacao());
+        upd.setDataAtualizacao(new Date());
+        upd.setFlagged(existente.isFlagged());
+        upd.setFlagReason(existente.getFlagReason());
+        associateUsuario(upd, dto.getUsuarioId());
+
+        List<String> kept = parseExistingPhotos(fotosExistentesJson);
+        List<Foto> fotos = mergeFotos(existente.getFotos(), kept, novasFotos, upd);
+        upd.setFotos(fotos);
+
+        Servico saved = servicoRepository.save(upd);
+        return toDtoWithRating(saved);
+    }
+
+    public void deletarServico(Long id) {
+        Servico servico = servicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado id=" + id));
+        servicoRepository.delete(servico);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServicoDTO> searchServicos(String query) {
+        return servicoRepository
+                .findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(query, query)
+                .stream()
+                .map(this::toDtoWithRating)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServicoDTO> listarServicosFlagged() {
+        return servicoRepository.findByFlaggedTrue().stream()
+                .map(this::toDtoWithRating)
+                .collect(Collectors.toList());
+    }
+
+    public void flagServico(Long id, String reason) {
+        Servico s = servicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado id=" + id));
+        s.setFlagged(true);
+        s.setFlagReason(reason);
+        servicoRepository.save(s);
+    }
+
+    public void unflagServico(Long id) {
+        Servico s = servicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado id=" + id));
+        s.setFlagged(false);
+        s.setFlagReason(null);
+        servicoRepository.save(s);
+    }
+
+    // --- helpers ---
+    private ServicoDTO toDtoWithRating(Servico servico) {
         ServicoDTO dto = ServicoMapper.INSTANCE.toDTO(servico);
-        List<Avaliacao> avaliacoes = avaliacaoRepository.findByTipoItemAndItemId("servico", dto.getId());
-        Double media = 0.0;
-        if (avaliacoes != null && !avaliacoes.isEmpty()) {
-            media = avaliacoes.stream().mapToDouble(a -> a.getNota()).average().orElse(0.0);
-        }
+        double media = avaliacaoRepository
+                .findByTipoItemAndItemId("servico", servico.getId())
+                .stream().mapToDouble(a -> a.getNota()).average().orElse(0.0);
         dto.setMediaAvaliacoes(media);
         return dto;
     }
 
-    // Método para atualizar um serviço, gerenciando também as imagens
-    @Transactional
-    public ServicoDTO atualizarServico(Long id, ServicoDTO servicoDTO, MultipartFile[] novasFotos, String fotosExistentesJson) {
-        Servico servicoExistente = servicoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
-        Servico servicoAtualizado = ServicoMapper.INSTANCE.toEntity(servicoDTO);
-        servicoAtualizado.setId(servicoExistente.getId());
-        servicoAtualizado.setDataCriacao(servicoExistente.getDataCriacao());
-        servicoAtualizado.setDataAtualizacao(new Date());
-        
-        if (servicoDTO.getUsuarioId() != null) {
-            Usuario usuario = usuarioRepository.findById(servicoDTO.getUsuarioId())
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
-            servicoAtualizado.setUsuario(usuario);
-        } else {
-            servicoAtualizado.setUsuario(servicoExistente.getUsuario());
+    private void associateUsuario(Servico servico, Long usuarioId) {
+        if (usuarioId == null) {
+            throw new RuntimeException("Campo usuarioId é obrigatório.");
         }
-        
-        final List<String> fotosExistentesFinal;
+        Usuario u = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado id=" + usuarioId));
+        servico.setUsuario(u);
+    }
+
+    private List<String> parseExistingPhotos(String json) {
+        if (json == null || json.isEmpty()) return List.of();
         try {
-            if (fotosExistentesJson != null && !fotosExistentesJson.isEmpty()) {
-                fotosExistentesFinal = objectMapper.readValue(fotosExistentesJson, new TypeReference<List<String>>() {});
-            } else {
-                fotosExistentesFinal = new ArrayList<>();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar fotos existentes.", e);
+            return objectMapper.readValue(json, new TypeReference<List<String>>(){});
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler fotos existentes.", e);
         }
-        
-        List<Foto> fotosAtuais = servicoExistente.getFotos() != null ? servicoExistente.getFotos() : new ArrayList<>();
-        List<Foto> fotosMantidas = fotosAtuais.stream()
-                .filter(f -> fotosExistentesFinal.contains(f.getCaminho()))
+    }
+
+    private List<Foto> initFotos(Servico servico, List<String> paths) {
+        if (paths == null) return List.of();
+        return paths.stream().map(path -> {
+            Foto f = new Foto(); f.setCaminho(path); f.setServico(servico); return f;
+        }).collect(Collectors.toList());
+    }
+
+    private List<Foto> mergeFotos(List<Foto> atuais, List<String> keep,
+                                  MultipartFile[] novas, Servico servico) {
+        List<Foto> mantidas = atuais.stream()
+                .filter(f -> keep.contains(f.getCaminho()))
                 .collect(Collectors.toList());
-        
-        if (novasFotos != null) {
-            for (MultipartFile file : novasFotos) {
+        if (novas != null) {
+            for (MultipartFile file : novas) {
                 if (!file.isEmpty()) {
-                    String caminhoSalvo = saveFile(file);
-                    Foto novaFoto = new Foto();
-                    novaFoto.setCaminho(caminhoSalvo);
-                    novaFoto.setServico(servicoAtualizado);
-                    fotosMantidas.add(novaFoto);
+                    String url = saveFile(file);
+                    Foto f = new Foto(); f.setCaminho(url); f.setServico(servico);
+                    mantidas.add(f);
                 }
             }
         }
-        
-        servicoAtualizado.setFotos(fotosMantidas);
-        
-        Servico salvo = servicoRepository.save(servicoAtualizado);
-        ServicoDTO dto = ServicoMapper.INSTANCE.toDTO(salvo);
-        List<Avaliacao> avaliacoes = avaliacaoRepository.findByTipoItemAndItemId("servico", dto.getId());
-        Double media = 0.0;
-        if (avaliacoes != null && !avaliacoes.isEmpty()) {
-            media = avaliacoes.stream().mapToDouble(a -> a.getNota()).average().orElse(0.0);
-        }
-        dto.setMediaAvaliacoes(media);
-        return dto;
+        return mantidas;
     }
 
-    // Método auxiliar para salvar arquivos e retornar a URL completa
     private String saveFile(MultipartFile file) {
         try {
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            return BASE_URL + "/" + UPLOAD_DIR + "/" + fileName;
+            File dir = new File(UPLOAD_DIR);
+            if (!dir.exists()) dir.mkdirs();
+            String name = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path target = Paths.get(UPLOAD_DIR, name);
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            return BASE_URL + "/" + UPLOAD_DIR + "/" + name;
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao salvar o arquivo: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar arquivo.", e);
         }
-    }
-    
-    // Método de pesquisa: busca serviços cujo título ou categoria contenha o termo (ignora case)
-    @Transactional(readOnly = true)
-    public List<ServicoDTO> searchServicos(String query) {
-        // Usa o novo método do repositório
-        List<Servico> servicos = servicoRepository.findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(query, query);
-        List<ServicoDTO> dtos = servicos.stream()
-                .map(ServicoMapper.INSTANCE::toDTO)
-                .collect(Collectors.toList());
-        for (ServicoDTO dto : dtos) {
-            List<Avaliacao> avaliacoes = avaliacaoRepository.findByTipoItemAndItemId("servico", dto.getId());
-            Double media = 0.0;
-            if (avaliacoes != null && !avaliacoes.isEmpty()) {
-                media = avaliacoes.stream().mapToDouble(a -> a.getNota()).average().orElse(0.0);
-            }
-            dto.setMediaAvaliacoes(media);
-        }
-        return dtos;
-    }
-    
-    public void deletarServico(Long id) {
-        Servico servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Serviço não encontrado para o id: " + id));
-        servicoRepository.delete(servico);
     }
 }

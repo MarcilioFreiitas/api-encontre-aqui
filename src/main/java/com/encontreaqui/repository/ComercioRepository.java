@@ -16,4 +16,7 @@ public interface ComercioRepository extends JpaRepository<Comercio, Long> {
     
     // Novo método para pesquisa: busca comércios cujo título ou categoria contenha o termo (ignorando case)
     List<Comercio> findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(String titulo, String categoria);
+
+    // === Novo método de moderação: listar apenas comércios sinalizados ===
+    List<Comercio> findByFlaggedTrue();
 }

@@ -6,6 +6,7 @@ import com.encontreaqui.model.Foto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,20 +15,24 @@ public interface ComercioMapper {
 
     ComercioMapper INSTANCE = Mappers.getMapper(ComercioMapper.class);
 
-    // Converter entidade para DTO (não utiliza avaliações diretamente)
+    // Converte entidade para DTO, incluindo campos de moderação
     @Mapping(source = "usuario.id", target = "usuarioId")
     @Mapping(target = "fotos", expression = "java(mapFotos(comercio.getFotos()))")
     @Mapping(source = "categoria", target = "categoria")
-    // O campo mediaAvaliacoes será setado posteriormente na camada service
+    @Mapping(source = "flagged", target = "flagged")
+    @Mapping(source = "flagReason", target = "flagReason")
     ComercioDTO toDTO(Comercio comercio);
 
-    // Converter DTO para entidade
-    @Mapping(source = "usuarioId", target = "usuario.id")
+    // Converte DTO para entidade, ignorando associação de usuário e incluindo moderação
+    @Mapping(target = "usuario", ignore = true)
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "fotos", expression = "java(mapStringToFotos(comercioDTO.getFotos()))")
     @Mapping(source = "categoria", target = "categoria")
+    @Mapping(source = "flagged", target = "flagged")
+    @Mapping(source = "flagReason", target = "flagReason")
     Comercio toEntity(ComercioDTO comercioDTO);
 
-    // Método auxiliar para converter List<Foto> para List<String> (caminhos das fotos)
+    // Mapeia List<Foto> para List<String>
     default List<String> mapFotos(List<Foto> fotos) {
         if (fotos == null) return null;
         return fotos.stream()
@@ -35,13 +40,15 @@ public interface ComercioMapper {
                 .collect(Collectors.toList());
     }
 
-    // Método auxiliar para converter List<String> em List<Foto>
+    // Mapeia List<String> para List<Foto>
     default List<Foto> mapStringToFotos(List<String> caminhos) {
         if (caminhos == null) return null;
-        return caminhos.stream().map(caminho -> {
-            Foto foto = new Foto();
-            foto.setCaminho(caminho);
-            return foto;
-        }).collect(Collectors.toList());
+        return caminhos.stream()
+                .map(caminho -> {
+                    Foto foto = new Foto();
+                    foto.setCaminho(caminho);
+                    return foto;
+                })
+                .collect(Collectors.toList());
     }
 }

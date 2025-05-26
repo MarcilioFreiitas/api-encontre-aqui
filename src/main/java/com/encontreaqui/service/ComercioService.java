@@ -8,6 +8,11 @@ import com.encontreaqui.repository.ComercioRepository;
 import com.encontreaqui.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,191 +23,184 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Service responsável pelas operações relacionadas ao comércio (criação, listagem, 
- * atualização com gerenciamento de fotos e deleção).
- */
 @Service
 @Transactional
 public class ComercioService {
 
     @Autowired
     private ComercioRepository comercioRepository;
-    
+
     @Autowired
-    private UsuarioRepository usuarioRepository; // para associar o usuário
+    private UsuarioRepository usuarioRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    // Diretório fixo onde as imagens serão armazenadas – ajuste conforme necessário.
     private static final String UPLOAD_DIR = "uploads";
-    
-    // BASE_URL para montagem do caminho completo da imagem
     private static final String BASE_URL = "http://localhost:8080";
 
     /**
      * Cria um novo comércio.
      */
-    public ComercioDTO criarComercio(ComercioDTO comercioDTO) {
-        Comercio comercio = ComercioMapper.INSTANCE.toEntity(comercioDTO);
-        
-        if (comercioDTO.getUsuarioId() != null) {
-            comercio.setUsuario(
-                usuarioRepository.findById(comercioDTO.getUsuarioId())
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado."))
-            );
-        } else {
+    public ComercioDTO criarComercio(ComercioDTO dto) {
+        Comercio c = ComercioMapper.INSTANCE.toEntity(dto);
+        if (dto.getUsuarioId() == null) {
             throw new RuntimeException("Campo usuarioId é obrigatório.");
         }
-        
-        if (comercio.getFotos() != null) {
-            comercio.getFotos().forEach(foto -> foto.setComercio(comercio));
+        c.setUsuario(
+            usuarioRepository.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."))
+        );
+        if (c.getFotos() != null) {
+            c.getFotos().forEach(f -> f.setComercio(c));
         }
-        
-        comercio.setDataCriacao(new Date());
-        comercio.setDataAtualizacao(new Date());
-        
-        Comercio salvo = comercioRepository.save(comercio);
+        c.setDataCriacao(new Date());
+        c.setDataAtualizacao(new Date());
+        Comercio salvo = comercioRepository.save(c);
         return ComercioMapper.INSTANCE.toDTO(salvo);
     }
 
     /**
-     * Lista todos os comércios e, para cada comércio, calcula a média das avaliações.
-     * Nota: A consulta de média é feita via query definida no repositório (findAverageRatingByCommerceId).
+     * Lista todos os comércios e define média de avaliações.
      */
     @Transactional(readOnly = true)
     public List<ComercioDTO> listarComercios() {
         return comercioRepository.findAll().stream()
-            .map(comercio -> {
-                ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(comercio);
-                Double media = comercioRepository.findAverageRatingByCommerceId(comercio.getId());
-                dto.setMediaAvaliacoes(media != null ? media : 0.0);
+            .map(c -> {
+                ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(c);
+                Double avg = comercioRepository.findAverageRatingByCommerceId(c.getId());
+                dto.setMediaAvaliacoes(avg != null ? avg : 0.0);
                 return dto;
             })
             .collect(Collectors.toList());
     }
 
     /**
-     * Busca um comércio pelo ID e calcula a média de suas avaliações.
+     * Busca comércio por ID.
      */
     @Transactional(readOnly = true)
     public ComercioDTO buscarPorId(Long id) {
-        Comercio comercio = comercioRepository.findById(id)
+        Comercio c = comercioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Comércio não encontrado."));
-        
-        Double media = comercioRepository.findAverageRatingByCommerceId(comercio.getId());
-        ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(comercio);
-        dto.setMediaAvaliacoes(media != null ? media : 0.0);
+        ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(c);
+        Double avg = comercioRepository.findAverageRatingByCommerceId(id);
+        dto.setMediaAvaliacoes(avg != null ? avg : 0.0);
         return dto;
     }
 
     /**
-     * Atualiza um comércio existente, permitindo a edição de campos e a gestão de fotos 
-     * (remoção de fotos existentes e adição de novas).
+     * Atualiza um comércio existente.
      */
     @Transactional
-    public ComercioDTO atualizarComercio(Long id, ComercioDTO comercioDTO, MultipartFile[] novasFotos, String fotosExistentesJson) {
-        Comercio comercioExistente = comercioRepository.findById(id)
+    public ComercioDTO atualizarComercio(Long id, ComercioDTO dto, MultipartFile[] novasFotos, String fotosJson) {
+        Comercio atual = comercioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Comércio não encontrado."));
-        
-        // Converte o DTO para a entidade; preserva o ID e a data de criação.
-        Comercio comercioAtualizado = ComercioMapper.INSTANCE.toEntity(comercioDTO);
-        comercioAtualizado.setId(comercioExistente.getId());
-        comercioAtualizado.setDataCriacao(comercioExistente.getDataCriacao());
-        comercioAtualizado.setDataAtualizacao(new Date());
-        
-        if (comercioDTO.getUsuarioId() != null) {
-            comercioAtualizado.setUsuario(
-                usuarioRepository.findById(comercioDTO.getUsuarioId())
+        Comercio c = ComercioMapper.INSTANCE.toEntity(dto);
+        c.setId(atual.getId());
+        c.setDataCriacao(atual.getDataCriacao());
+        c.setDataAtualizacao(new Date());
+        if (dto.getUsuarioId() != null) {
+            c.setUsuario(
+                usuarioRepository.findById(dto.getUsuarioId())
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado."))
             );
         } else {
-            comercioAtualizado.setUsuario(comercioExistente.getUsuario());
+            c.setUsuario(atual.getUsuario());
         }
-        
-        final List<String> fotosExistentesFinal;
+        List<String> exist;
         try {
-            if (fotosExistentesJson != null && !fotosExistentesJson.isEmpty()) {
-                fotosExistentesFinal = objectMapper.readValue(fotosExistentesJson, new TypeReference<List<String>>() {});
-            } else {
-                fotosExistentesFinal = new ArrayList<>();
-            }
-        } catch (Exception e) {
+            exist = (fotosJson != null && !fotosJson.isEmpty())
+                ? objectMapper.readValue(fotosJson, new TypeReference<List<String>>() {})
+                : new ArrayList<>();
+        } catch (IOException e) {
             throw new RuntimeException("Erro ao processar fotos existentes.", e);
         }
-        
-        List<Foto> fotosAtuais = comercioExistente.getFotos() != null ? comercioExistente.getFotos() : new ArrayList<>();
-        List<Foto> fotosMantidas = fotosAtuais.stream()
-            .filter(f -> fotosExistentesFinal.contains(f.getCaminho()))
+        List<Foto> mantidas = atual.getFotos().stream()
+            .filter(f -> exist.contains(f.getCaminho()))
             .collect(Collectors.toList());
-        
         if (novasFotos != null) {
-            for (MultipartFile file : novasFotos) {
-                if (!file.isEmpty()) {
-                    String caminhoSalvo = saveFile(file);
-                    Foto novaFoto = new Foto();
-                    novaFoto.setCaminho(caminhoSalvo);
-                    novaFoto.setComercio(comercioAtualizado);
-                    fotosMantidas.add(novaFoto);
+            for (MultipartFile mf : novasFotos) {
+                if (!mf.isEmpty()) {
+                    String path = saveFile(mf);
+                    Foto nf = new Foto(); nf.setCaminho(path); nf.setComercio(c);
+                    mantidas.add(nf);
                 }
             }
         }
-        
-        comercioAtualizado.setFotos(fotosMantidas);
-        Comercio salvo = comercioRepository.save(comercioAtualizado);
-        return ComercioMapper.INSTANCE.toDTO(salvo);
-    }
-    
-    /**
-     * Método auxiliar para salvar o arquivo enviado via MultipartFile.
-     * Retorna o caminho completo (URL) do arquivo armazenado.
-     */
-    private String saveFile(MultipartFile file) {
-        try {
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-            
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            return BASE_URL + "/" + UPLOAD_DIR + "/" + fileName;
-        } catch (IOException e) {
-            throw new RuntimeException("Erro ao salvar o arquivo: " + e.getMessage(), e);
-        }
+        c.setFotos(mantidas);
+        Comercio saved = comercioRepository.save(c);
+        return ComercioMapper.INSTANCE.toDTO(saved);
     }
 
     /**
-     * Deleta um comércio pelo ID.
+     * Deleta um comércio.
      */
     public void deletarComercio(Long id) {
-        Comercio comercio = comercioRepository.findById(id)
+        Comercio c = comercioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Comércio não encontrado."));
-        comercioRepository.delete(comercio);
+        comercioRepository.delete(c);
     }
-    
+
     /**
-     * NOVA FUNCIONALIDADE DE PESQUISA:
-     * Busca comércios cujo título ou categoria contenha o termo de pesquisa (ignorando case)
-     * e, para cada comércio encontrado, calcula a média das avaliações.
+     * Pesquisa comércios.
      */
     @Transactional(readOnly = true)
-    public List<ComercioDTO> searchComercios(String query) {
-        // Usa o método customizado para buscar por título ou categoria
-        List<Comercio> comercios = comercioRepository
-            .findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(query, query);
-        
-        return comercios.stream().map(comercio -> {
-            ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(comercio);
-            Double media = comercioRepository.findAverageRatingByCommerceId(comercio.getId());
-            dto.setMediaAvaliacoes(media != null ? media : 0.0);
-            return dto;
-        }).collect(Collectors.toList());
+    public List<ComercioDTO> searchComercios(String q) {
+        return comercioRepository
+            .findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(q, q)
+            .stream()
+            .map(c -> {
+                ComercioDTO dto = ComercioMapper.INSTANCE.toDTO(c);
+                Double avg = comercioRepository.findAverageRatingByCommerceId(c.getId());
+                dto.setMediaAvaliacoes(avg != null ? avg : 0.0);
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    // === Moderação ===
+
+    /**
+     * Lista comércios sinalizados.
+     */
+    @Transactional(readOnly = true)
+    public List<ComercioDTO> listarComerciosSinalizados() {
+        return comercioRepository.findByFlaggedTrue()
+            .stream()
+            .map(ComercioMapper.INSTANCE::toDTO)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Remove comércio sinalizado.
+     */
+    public void removeComercioSinalizado(Long id) {
+        comercioRepository.deleteById(id);
+    }
+
+    /**
+     * Restaura comércio sinalizado.
+     */
+    public void restaurarComercio(Long id) {
+        Comercio c = comercioRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Comércio não encontrado."));
+        c.setFlagged(false);
+        c.setFlagReason(null);
+        comercioRepository.save(c);
+    }
+
+    /**
+     * Salva arquivo e retorna URL.
+     */
+    private String saveFile(MultipartFile f) {
+        try {
+            File dir = new File(UPLOAD_DIR);
+            if (!dir.exists()) dir.mkdirs();
+            String name = System.currentTimeMillis() + "_" + f.getOriginalFilename();
+            Path dest = Paths.get(UPLOAD_DIR, name);
+            Files.copy(f.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
+            return BASE_URL + "/" + UPLOAD_DIR + "/" + name;
+        } catch (IOException ex) {
+            throw new RuntimeException("Erro ao salvar o arquivo: " + ex.getMessage(), ex);
+        }
     }
 }

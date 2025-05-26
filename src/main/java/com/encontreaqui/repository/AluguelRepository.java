@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface AluguelRepository extends JpaRepository<Aluguel, Long> {
     // Método customizado que busca anúncios de aluguel cujo título ou categoria contenha o termo (ignora case)
     List<Aluguel> findByTituloContainingIgnoreCaseOrCategoriaContainingIgnoreCase(String titulo, String categoria);
+    List<Aluguel> findByFlaggedTrue();
 }
